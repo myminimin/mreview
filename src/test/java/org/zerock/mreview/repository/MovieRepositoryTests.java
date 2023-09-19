@@ -79,5 +79,5 @@ public class MovieRepositoryTests {
         for (Object[] arr : result) {
             System.out.println(Arrays.toString(arr));
         }
-    }
+    } // 378
 }
