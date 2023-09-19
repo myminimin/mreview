@@ -16,7 +16,10 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     Page<Object[]> getListPage(Pageable pageable);  // 페이지 처리
 
     // @Query("SELECT m, mi FROM Movie m LEFT OUTER JOIN MovieImage mi ON mi.movie = m WHERE m.mno = :mno")
-    @Query("SELECT m, mi, avg(coalesce(r.grade,0)), count(r) FROM Movie m LEFT OUTER JOIN MovieImage mi ON mi.movie = m LEFT OUTER JOIN Review r ON r.movie = m WHERE m.mno = :mno GROUP BY mi")
+    @Query("SELECT m, mi, avg(coalesce(r.grade,0)), count(r)" +
+            " FROM Movie m LEFT OUTER JOIN MovieImage mi ON mi.movie = m" +
+            " LEFT OUTER JOIN Review r ON r.movie = m" +
+            " WHERE m.mno = :mno GROUP BY mi")
     List<Object[]> getMovieWithAll(Long mno);   // 특정 영화 조회
 
 }
