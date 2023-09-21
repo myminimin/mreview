@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{/layout/basic :: setContent(~{this::content} )}">
+
+  <th:block th:fragment="content">
+
+    <h1 class="mt-4">Movie Read Page</h1>
+
+
+    <div class="form-group">
+      <label >Title</label>
+      <input type="text" class="form-control" name="title" th:value="${dto.title}" readonly>
+    </div>
+
+    <div class="form-group">
+      <label >Review Count </label>
+      <input type="text" class="form-control" name="title" th:value="${dto.reviewCnt}" readonly>
+    </div>
+
+    <div class="form-group">
+      <label >Avg </label>
+      <input type="text" class="form-control" name="title" th:value="${dto.avg}" readonly>
+    </div>
+
+    <style>
+      .uploadResult {
+        width: 100%;
+        background-color: gray;
+        margin-top: 10px;
+      }
+
+      .uploadResult ul {
+        display: flex;
+        flex-flow: row;
+        justify-content: center;
+        align-items: center;
+        vertical-align: top;
+        overflow: auto;
+      }
+
+      .uploadResult ul li {
+        list-style: none;
+        padding: 10px;
+        margin-left: 2em;
+      }
+
+      .uploadResult ul li img {
+        width: 100px;
+      }
+    </style>
+
+    <div class="uploadResult">
+      <ul >
+        <li th:each="movieImage: ${dto.imageDTOList}" >
+          <img  th:if="${movieImage.path != null}" th:src="|/display?fileName=${movieImage.getThumbnailURL()}|">
+        </li>
+      </ul>
+    </div>
+
+    <button type="button" class="btn btn-primary">
+      Review Count <span class="badge badge-light">[[${dto.reviewCnt}]]</span>
+    </button>
+
+    <button type="button" class="btn btn-info addReviewBtn">
+      Review Register
+    </button>
+
+    <div class="list-group reviewList">
+
+    </div>
+
+    <!-- reviewModal -->
+    <div class="reviewModal modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Movie Review</h5>
+
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <!-- 실제 영화 리뷰에 대한 처리를 하기 때문에 회원 아이디(mid)와 별점/리뷰 내용을 입력할 수 있는 태그가 필요함-->
+          <div class="modal-body">
+            <div class="form-group">
+              <label >Reviewer ID</label>
+              <input type="text" class="form-control" name="mid" >
+            </div>
+            <div class="form-group">
+              <label >Grade <span class="grade"></span></label>
+              <div class='starrr'></div>
+            </div>
+            <div class="form-group">
+              <label >Review Text</label>
+              <input type="text" class="form-control" name="text" placeholder="Good Movie!" >
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary reviewSaveBtn">Save changes</button>
+            <button type="button" class="btn btn-warning modifyBtn">Modify </button>
+            <button type="button" class="btn btn-danger removeBtn">Remove </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--imageModal -->
+    <div class="imageModal modal " tabindex="-2" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Picture</h5>
+
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 별점을 처리하는 작업은 라이브러리를 이용 -->
+    <script th:src="@{/starrr.js}"></script>
+    <link th:href="@{/css/starrr.css}" rel="stylesheet">
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css">
+
+    <script>
+      $(document).ready(function(e) {
+
+        var grade = 0;
+        var mno = [[${dto.mno}]];
+
+        $('.starrr').starrr({
+          rating: grade,
+          change: function(e, value){
+            if (value) {
+              console.log(value);
+              grade = value;
+            }
+          }
+        });
+
+        // $(".reviewModal").modal("show"); 미리 보기용
+
+        var reviewModal = $(".reviewModal");
+        var inputMid = $('input[name="mid"]');
+        var inputText = $('input[name="text"]');
+
+        // 'Review Register'을 클릭할 때 modal이 보이도록 설정
+        $(".addReviewBtn").click(function () {
+          inputMid.val("");
+          inputText.val("");
+
+          $(".removeBtn ,  .modifyBtn").hide();
+          $(".reviewSaveBtn").show();
+
+          reviewModal.modal('show');
+        });
+
+        // 'Save changes'을 클릭할 때 동작하도록 이벤트 처리
+        $('.reviewSaveBtn').click(function() {
+
+          var data = {mno:mno, grade:grade, text:inputText.val(), mid: inputMid.val() };
+
+          console.log(data);
+
+          // 'reviewSaveBtn'을 클릭하면 회원(Reviewer)의 아이디(mid)와 점수(grade)
+          // 내용(text)을 JSON 데이터로 만들어서 전송하게 한다
+          $.ajax({
+            url:'/reviews/'+mno,
+            type:"POST",
+            data:JSON.stringify(data),
+            contentType:"application/json; charset=utf-8",
+            dataType:"text",
+            success: function(result){
+
+              console.log("result: " + result);
+
+              self.location.reload();
+              // 데이터 처리가 성공하면 reload()를 이용해서 URL을 다시 호출해서
+              // 새로운 리뷰가 등록되면 변화하는 평균 평점과 영화 리뷰의 개수를 갱신하게 된다.
+
+            }
+          })
+          reviewModal.modal('hide');
+
+        });
+
+      });
+    </script>
+
+  </th:block>
+</th:block>
+

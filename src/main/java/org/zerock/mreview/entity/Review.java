@@ -20,12 +20,19 @@ public class Review extends BaseEntity {
     private String text; // 리뷰 내용
 
     /* Review 클래스는 Movie와 Member를 @ManyToOne을 이용해서 양쪽을 참조하는 구조이다. */
-
     @ManyToOne(fetch = FetchType.LAZY)
     private Movie movie;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
+    /* 리뷰 수정 기능 */
+    public void changeGrade(int grade){
+        this.grade = grade;
+    }
+
+    public void changeText(String text){
+        this.text = text;
+    }
 
 }
