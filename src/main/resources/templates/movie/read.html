@@ -52,7 +52,7 @@
 
     <div class="uploadResult">
       <ul >
-        <li th:each="movieImage: ${dto.imageDTOList}" >
+        <li th:each="movieImage: ${dto.imageDTOList}" th:data-file="${movieImage.getThumbnailURL()}" >
           <img  th:if="${movieImage.path != null}" th:src="|/display?fileName=${movieImage.getThumbnailURL()}|">
         </li>
       </ul>
@@ -67,7 +67,8 @@
     </button>
 
     <div class="list-group reviewList">
-
+      <!-- function getMovieReviews()에서 jQuery의 getJSON()을 이용해서
+           MovieReviewController를 호출하게 되고 div의 내용물을 채워준다! -->
     </div>
 
     <!-- reviewModal -->
@@ -193,6 +194,123 @@
           reviewModal.modal('hide');
 
         });
+
+        //페이지가 열리면 바로 리뷰 데이터들을 가져와서 사용한다.
+        function getMovieReviews() {
+
+          function formatTime(str){
+            var date = new Date(str);
+
+            return date.getFullYear() + '/' +
+                    (date.getMonth() + 1) + '/' +
+                    date.getDate() + ' ' +
+                    date.getHours() + ':' +
+                    date.getMinutes();
+          }
+
+          $.getJSON("/reviews/"+ mno +"/all", function(arr){
+            var str ="";
+
+            $.each(arr, function(idx, review){
+
+              console.log(review);
+
+              str += '    <div class="card-body" data-reviewnum='+review.reviewnum+' data-mid='+review.mid+'>';
+              str += '    <h5 class="card-title">'+review.text+' <span>'+ review.grade+'</span></h5>';
+              str += '    <h6 class="card-subtitle mb-2 text-muted">'+review.nickname+'</h6>';
+              str += '    <p class="card-text">'+ formatTime(review.regDate) +'</p>';
+              str += '    </div>';
+            });
+
+            $(".reviewList").html(str);
+          });
+        }
+
+        getMovieReviews();
+
+        //modify reveiw
+
+        var reviewnum;
+        // 나중에 수정이나 삭제 작업에도 사용할 수 있도록 외부에 선언
+
+        $(".reviewList").on("click", ".card-body", function() {
+
+          $(".reviewSaveBtn").hide();
+          $(".removeBtn , .modifyBtn").show();
+
+
+          var targetReview = $(this);
+
+          reviewnum = targetReview.data("reviewnum");
+          console.log("reviewnum: "+ reviewnum);
+          inputMid.val(targetReview.data("mid"));
+          inputText.val(targetReview.find('.card-title').clone().children().remove().end().text());
+
+          var grade = targetReview.find('.card-title span').html();
+          $(".starrr a:nth-child("+grade+")").trigger('click');
+
+          $('.reviewModal').modal('show');
+        });
+
+        $(".modifyBtn").on("click", function(){
+
+          var data = {reviewnum: reviewnum, mno:mno, grade:grade, text:inputText.val(), mid: inputMid.val() };
+
+          console.log(data);
+
+          $.ajax({
+            url:'/reviews/'+mno +"/"+ reviewnum ,
+            type:"PUT",
+            data:JSON.stringify(data),
+            contentType:"application/json; charset=utf-8",
+            dataType:"text",
+            success: function(result){
+
+              console.log("result: " + result);
+
+              self.location.reload();
+
+            }
+          })
+          reviewModal.modal('hide');
+        });
+
+        $(".removeBtn").on("click", function(){
+
+          var data = {reviewnum: reviewnum};
+
+          console.log(data);
+
+          $.ajax({
+            url:'/reviews/'+mno +"/"+ reviewnum ,
+            type:"DELETE",
+            contentType:"application/json; charset=utf-8",
+            dataType:"text",
+            success: function(result){
+
+              console.log("result: " + result);
+
+              self.location.reload();
+
+            }
+          })
+          reviewModal.modal('hide');
+        });
+
+        $(".uploadResult li").click(function() {
+
+          var file = $(this).data('file');
+          // data-file 속성값을 가져옴
+
+          console.log(file);
+
+          $('.imageModal .modal-body').html("<img style='width:100%' src='/display?fileName="+file+"&size=1' >")
+          /* size의 파라미터 값을 이용해서 원본 이미지를 가져오게 한다. (UploadController에서 size=1 일 경우 원본 이미지)*/
+
+          $(".imageModal").modal("show");
+
+        });
+
 
       });
     </script>

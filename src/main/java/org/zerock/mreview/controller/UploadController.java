@@ -101,7 +101,7 @@ public class UploadController {
     }
 
     @GetMapping("/display")
-    public ResponseEntity<byte[]> getFile(String fileName) {
+    public ResponseEntity<byte[]> getFile(String fileName, String size) {
         // URL 인코딩된 파일 이름을 파라미터로 받아서 해당 파일을 byte[]로 만들어 브라우저로 전송함
 
         ResponseEntity<byte[]> result = null;
@@ -112,6 +112,12 @@ public class UploadController {
             log.info("fileName: " + srcFileName);
 
             File file = new File(uploadPath +File.separator+ srcFileName);
+
+            if(size != null && size.equals("1")){
+                file = new File(file.getParent(), file.getName().substring(2));
+            }
+            // 섬네일의 파일은 중간에 's_'만 추가되어 있다는 점을 이용해서 size의 변수의 값이
+            // 1인 경우에는 원본 파일을 전송하도록 설정.
 
             log.info("file: " + file);
 
